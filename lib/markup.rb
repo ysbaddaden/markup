@@ -39,11 +39,8 @@ class Markup
         [ $1 == "#" ? :ol : :ul, parse_list_items(str) ]
       
       else
-        if options[:p] == false
-          str.strip
-        else
-          [ :p, str.gsub(/\n/, ' ').strip ]
-        end
+        str = str.gsub(/\n/, ' ').strip
+        options[:p] == false ? str : [ :p, str ]
       end
     end.compact
   end
@@ -81,5 +78,10 @@ class Markup
         
         [ :li, struct.size > 1 ? struct : struct.first ]
       end.compact
+    end
+
+    def parse_blockquotes(text)
+      struct = parse(text, :p => !!(text =~ /\n\n/)) unless text.blank?
+      struct.size > 1 ? struct : struct.first
     end
 end
