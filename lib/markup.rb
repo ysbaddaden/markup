@@ -13,6 +13,7 @@ class Markup
 
   LIST_RE      = /^([#*-]) /
   LIST_SPLIT   = /^[#*-] /
+  LIST_CLEAN   = /^[ ]{2}/
   NESTED_BLOCK = /\A(.*?)\n([-*#=>] .*)\Z/m
 
   def initialize(input_string)
@@ -72,7 +73,7 @@ class Markup
       text.split(LIST_SPLIT).collect do |str|
         next if str.blank?
         
-        str.gsub!(/^[ ]{2}/, "")
+        str.gsub!(LIST_CLEAN, "")
         item, str = $1, $2 if str =~ NESTED_BLOCK
         
         struct = parse(str, :p => !!(str =~ /\n\n/)) unless str.blank?
