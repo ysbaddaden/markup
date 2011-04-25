@@ -33,7 +33,7 @@ class Markup
         [ :pre, str.gsub(PRE_CLEAN, '') ]
       
       when QUOTE_RE
-        [ :blockquote, str.gsub(QUOTE_CLEAN, '').gsub(/\n/, ' ').strip ]
+        [ :blockquote, parse_blockquote(str) ]
       
       when LIST_RE
         [ $1 == "#" ? :ol : :ul, parse_list_items(str) ]
@@ -80,8 +80,12 @@ class Markup
       end.compact
     end
 
-    def parse_blockquotes(text)
-      struct = parse(text, :p => !!(text =~ /\n\n/)) unless text.blank?
-      struct.size > 1 ? struct : struct.first
+    def parse_blockquote(text)
+      text.gsub!(QUOTE_CLEAN, '')
+      
+      unless text.blank?
+        struct = parse(text, :p => !!(text =~ /\n\n/))
+        struct.size > 1 ? struct : struct.first
+      end
     end
 end

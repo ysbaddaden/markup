@@ -28,6 +28,11 @@ class MarkupTest < ActiveSupport::TestCase
       Markup.new("> lorem ipsum\n> dolor sit amet").parse
   end
 
+  test "should parse nested blockquotes" do
+    assert_equal [[:blockquote, [[:p, "lorem ipsum"], [:blockquote, "dolor sit amet"]]]],
+      Markup.new("> lorem ipsum\n> \n> > dolor sit\n> > amet").parse
+  end
+
   test "should parse heading" do
     assert_equal [[:h1, "abcd"]], Markup.new("= abcd").parse
     assert_equal [[:h2, "abcd"]], Markup.new("== abcd").parse
