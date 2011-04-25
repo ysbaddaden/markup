@@ -1,9 +1,7 @@
-require 'pp'
-
+# TODO: parse inline markup: bold, italic, underline, links and images.
+# IMPROVE: generate table of content from headings.
 class Markup
   attr_accessor :input_string
-
-  NESTED_BLOCK = /\A(.*?)\n([-*#=>] .*)\Z/m
 
   HEADING_RE   = /\A(=+)\s*(.+?)\s*\Z/
 
@@ -15,6 +13,7 @@ class Markup
 
   LIST_RE      = /^([#*-]) /
   LIST_SPLIT   = /^[#*-] /
+  NESTED_BLOCK = /\A(.*?)\n([-*#=>] .*)\Z/m
 
   def initialize(input_string)
     self.input_string = input_string
@@ -25,52 +24,61 @@ class Markup
     parse_blocks(text).collect do |str|
       next if str.blank?
       
-      if str =~ HEADING_RE
+      case str
+      when HEADING_RE
         [ "h#{$1.size}".to_sym, $2 ]
       
-      elsif str =~ PRE_RE
+      when PRE_RE
         [ :pre, str.gsub(PRE_CLEAN, '') ]
       
-      elsif str =~ QUOTE_RE
+      when QUOTE_RE
         [ :blockquote, str.gsub(QUOTE_CLEAN, '').gsub(/\n/, ' ').strip ]
       
-      elsif str =~ LIST_RE
+      when LIST_RE
         [ $1 == "#" ? :ol : :ul, parse_list_items(str) ]
       
-      elsif options[:p] != false
-        [ :p, str.gsub(/\n/, ' ').strip ]
-      
       else
-        str.strip
+        if options[:p] == false
+          str.strip
+        else
+          [ :p, str.gsub(/\n/, ' ').strip ]
+        end
       end
     end.compact
   end
 
-  def parse_blocks(text)
-    text.sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
-  end
-
   def to_html
-    str = _to_html
+    str = _to_html(parse)
     str.respond_to?(:html_safe) ? str.html_safe : str
   end
 
   protected
-    def _to_html
-      # ...
+    def _to_html(struct)
+      struct.collect do |tag, struct|
+        if tag.is_a?(String)
+          tag
+        else
+          content = struct.is_a?(Array) ? _to_html(struct) : struct
+          "<#{tag}>#{content}</#{tag}>"
+        end
+      end.join
+    end
+
+    def parse_blocks(text)
+      text.sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
     end
 
     def parse_list_items(text)
       text.split(LIST_SPLIT).collect do |str|
-        unless str.blank?
-          str.gsub!(/^[ ]{2}/, "")
-          item, str = $1, $2 if str =~ NESTED_BLOCK
-          
-          struct = parse(str, :p => !!(str =~ /\n\n/)) unless str.blank?
-          struct.unshift(item) if item
-          
-          [ :li, struct.size > 1 ? struct : struct.first ]
-        end 
+        next if str.blank?
+        
+        str.gsub!(/^[ ]{2}/, "")
+        item, str = $1, $2 if str =~ NESTED_BLOCK
+        
+        struct = parse(str, :p => !!(str =~ /\n\n/)) unless str.blank?
+        struct.unshift(item) if item
+        
+        [ :li, struct.size > 1 ? struct : struct.first ]
       end.compact
     end
 end
