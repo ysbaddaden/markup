@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class MarkupTest < ActiveSupport::TestCase
+class ParserTest < ActiveSupport::TestCase
   test "should clear starting blank lines" do
     assert_equal [[:h1, "abcd"]], Markup.new("\n  \n\n= abcd\n").parse
   end
@@ -61,45 +61,17 @@ class MarkupTest < ActiveSupport::TestCase
   end
 
   test "should parse nested list" do
-    text =<<-EOV
-- item a:
-  - sub item a1,
-  - sub item a2;
-- item b:
-  - sub item b1;
-- item c;
-- item d:
-  - sub item d1,
-  - sub item d2,
-  - sub item d3;
-EOV
     struct = [[ :ul, [
       [:li, ["item a:", [:ul, [[:li, "sub item a1,"], [:li, "sub item a2;"]]]]],
       [:li, ["item b:", [:ul, [[:li, "sub item b1;"]]]]],
       [:li, "item c;"],
       [:li, ["item d:", [:ul, [[:li, "sub item d1,"], [:li, "sub item d2,"], [:li, "sub item d3;"]]]]],
     ]]]
-    assert_equal struct, Markup.new(text).parse
+    assert_equal struct, Markup.new(fixture(:nested_list)).parse
   end
 
   test "should parse" do
-    text =<<-EOV
-= The standard Lorem Ipsum passage, used since the 1500s
-
-Lorem ipsum dolor sit amet, consectetur adipisicing elit,
-sed do eiusmod tempor incididunt ut labore et dolore magna
-aliqua.
-
-    Ut enim ad minim veniam, quis nostrud exercitation ullamco
-    laboris nisi ut aliquip ex ea commodo consequat.
-    
-    Duis aute irure dolor in reprehenderit in voluptate velit
-    esse cillum dolore eu fugiat nulla pariatur.
-
-Excepteur sint occaecat cupidatat non proident, sunt in
-culpa qui officia deserunt mollit anim id est laborum.
-EOV
-    blocks = [
+    struct = [
       [ :h1, "The standard Lorem Ipsum passage, used since the 1500s" ],
       [ :p, "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." ],
       [ :pre, "Ut enim ad minim veniam, quis nostrud exercitation ullamco
@@ -109,35 +81,11 @@ Duis aute irure dolor in reprehenderit in voluptate velit
 esse cillum dolore eu fugiat nulla pariatur." ],
       [ :p, "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum." ]
     ] 
-    assert_equal blocks, Markup.new(text).parse
+    assert_equal struct, Markup.new(fixture(:text)).parse
   end
 
   test "should parse text with nested lists" do
-    text =<<-EOV
-
-= Heading 1
-
-The very first
-paragraph.
-
-== Heading 2
-
-# item 1
-  - A first paragraph
-    inside a nested list.
-    
-    A second paragraph
-    inside a nested list.
-  
-# item 2
-  - 2.a
-  - Another paragraph
-    inside a nested list.
-    
-    Yet another paragraph.
-
-EOV
-    assert_equal [
+    struct = [
       [ :h1, "Heading 1" ],
       [ :p,  "The very first paragraph." ],
       [ :h2, "Heading 2" ],
@@ -162,56 +110,7 @@ EOV
           ]]
         ]]
       ]]
-    ], Markup.new(text).parse
-    
-    assert_equal "<h1>Heading 1</h1>" +
-      "<p>The very first paragraph.</p>" +
-      "<h2>Heading 2</h2>" +
-      "<ol>" +
-        "<li>" +
-          "item 1" +
-          "<ul>" +
-            "<li>" +
-              "<p>A first paragraph inside a nested list.</p>" +
-              "<p>A second paragraph inside a nested list.</p>" +
-            "</li>" +
-          "</ul>" +
-        "</li>" +
-        "<li>" +
-          "item 2" +
-          "<ul>" +
-            "<li>2.a</li>" +
-            "<li>" +
-              "<p>Another paragraph inside a nested list.</p>" +
-              "<p>Yet another paragraph.</p>" +
-            "</li>" +
-          "</ul>" +
-        "</li>" +
-      "</ol>", Markup.new(text).to_html
-    
-    assert_equal "<h1>Heading 1</h1>
-<p>The very first paragraph.</p>
-<h2>Heading 2</h2>
-<ol>
-  <li>
-    item 1
-    <ul>
-      <li>
-        <p>A first paragraph inside a nested list.</p>
-        <p>A second paragraph inside a nested list.</p>
-      </li>
-    </ul>
-  </li>
-  <li>
-    item 2
-    <ul>
-      <li>2.a</li>
-      <li>
-        <p>Another paragraph inside a nested list.</p>
-        <p>Yet another paragraph.</p>
-      </li>
-    </ul>
-  </li>
-</ol>", Markup.new(text).to_html(:indent => true)
+    ]
+    assert_equal assert_equal, Markup.new(fixture(:blocks_in_nested_lists)).parse
   end
 end
