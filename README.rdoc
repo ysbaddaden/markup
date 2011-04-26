@@ -1,0 +1,66 @@
+= Another Ligthweight Markup Language
+
+ALML is yet another lightweight markup language. The current implementation is
+pure ruby.
+
+== Syntax
+
+  = Heading 1
+  
+  This is a single
+  paragraph.
+  
+  And this is another paragraph.
+  
+  == Heading 2
+  
+  > this is a
+  > blockquote
+  
+  === Lists
+  
+  Unordered list:
+  
+  - first item
+  - second item
+  
+  You may also use stars +*+ instead of dashes +-+:
+  
+  * first item
+  * second item
+  
+  Ordered list:
+  
+  # item 1
+  # item 2
+  
+  == Nested blocks
+  
+  You may nest blocks within list items:
+  
+  - item 1
+  - item 2
+    # subitem 2.1
+    # subitem 2.2
+  - item 3
+    - this is a nested
+      paragraph.
+      
+      > this is a nested
+      > blockquote
+    - item 3.2
+  
+  You may also nest blocks in blockquotes:
+  
+  > This is a paragraph
+  > in a blockquote.
+  > 
+  > > This is a blockquote inside a blockquote.
+  > 
+  > - a list in a blockquote
+  > - a second item
+  >   - first subitem
+  >   - and even more:
+  >     > this is a blockquote in a sublist
+  >     > in a blockquote.
+
