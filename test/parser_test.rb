@@ -111,6 +111,6 @@ esse cillum dolore eu fugiat nulla pariatur." ],
         ]]
       ]]
     ]
-    assert_equal assert_equal, Markup.new(fixture(:blocks_in_nested_lists)).parse
+    assert_equal struct, Markup.new(fixture(:blocks_in_nested_lists)).parse
   end
 end

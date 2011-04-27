@@ -20,29 +20,8 @@ class Markup
     self.input_string = input_string
   end
 
-  # Parses a text for block elements like headings and paragraphs.
-  def parse(text = input_string, options = {})
-    parse_blocks(text).collect do |str|
-      next if str.blank?
-      
-      case str
-      when HEADING_RE
-        [ "h#{$1.size}".to_sym, $2 ]
-      
-      when PRE_RE
-        [ :pre, str.gsub(PRE_CLEAN, '') ]
-      
-      when QUOTE_RE
-        [ :blockquote, parse_blockquote(str) ]
-      
-      when LIST_RE
-        [ $1 == "#" ? :ol : :ul, parse_list_items(str) ]
-      
-      else
-        str = str.gsub(/\n/, ' ').strip
-        options[:p] == false ? str : [ :p, str ]
-      end
-    end.compact
+  def parse(options = {})
+    parse_blocks(input_string, options)
   end
 
   def to_html(options = {})
@@ -51,6 +30,81 @@ class Markup
   end
 
   protected
+    # Splits a text for block elements.
+    def split(text)
+      text.sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
+    end
+
+    # Parses text for block elements to the internal AST.
+    def parse_blocks(text, options = {})
+      split(text).collect do |str|
+        next if str.blank?
+        
+        case str
+        when HEADING_RE
+          [ "h#{$1.size}".to_sym, $2 ]
+        
+        when PRE_RE
+          [ :pre, str.gsub(PRE_CLEAN, '') ]
+        
+        when QUOTE_RE
+          [ :blockquote, parse_blockquote(str) ]
+        
+        when LIST_RE
+          [ $1 == "#" ? :ol : :ul, parse_list(str) ]
+        
+        else
+          str = parse_inlines(str.gsub(/\n/, ' ').strip)
+          options[:p] == false ? str : [ :p, str ]
+        end
+      end.compact
+    end
+
+    def parse_list(text)
+      text.split(LIST_SPLIT).collect do |str|
+        next if str.blank?
+        
+        str.gsub!(LIST_CLEAN, "")
+        item, str = $1, $2 if str =~ NESTED_BLOCK
+        
+        struct = parse_blocks(str, :p => !!(str =~ /\n\n/)) unless str.blank?
+        struct.unshift(parse_inlines(item)) if item
+        
+        [ :li, struct.size > 1 ? struct : struct.first ]
+      end.compact
+    end
+
+    def parse_blockquote(text)
+      text.gsub!(QUOTE_CLEAN, '')
+      
+      unless text.blank?
+        struct = parse_blocks(text, :p => !!(text =~ /\n\n/))
+        struct.size > 1 ? struct : struct.first
+      end
+    end
+
+    def parse_inlines(str)
+      parts = str.split(/\s*([*\/]{2})(.+?)\1\s*/)
+      spans = []
+      
+      i = 0
+      until parts[i].nil?
+        case parts[i]
+        when '**'
+          spans << [ :b, parse_inlines(parts[i += 1]) ]
+        when '//'
+          spans << [ :i, parse_inlines(parts[i += 1]) ]
+        else
+          spans << parts[i] unless parts[i].blank?
+        end
+        
+        i += 1
+      end
+      
+      spans.compact
+      spans.size > 1 ? spans : spans.first
+    end
+
     def _to_html(struct, options = {})
       deep = options[:deep] || 0
       
@@ -68,33 +122,6 @@ class Markup
         html.insert(0, "").join("\n#{indent * deep}") + "\n" + (indent * [0, deep - 1].max)
       else
         html.join
-      end
-    end
-
-    def parse_blocks(text)
-      text.sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
-    end
-
-    def parse_list_items(text)
-      text.split(LIST_SPLIT).collect do |str|
-        next if str.blank?
-        
-        str.gsub!(LIST_CLEAN, "")
-        item, str = $1, $2 if str =~ NESTED_BLOCK
-        
-        struct = parse(str, :p => !!(str =~ /\n\n/)) unless str.blank?
-        struct.unshift(item) if item
-        
-        [ :li, struct.size > 1 ? struct : struct.first ]
-      end.compact
-    end
-
-    def parse_blockquote(text)
-      text.gsub!(QUOTE_CLEAN, '')
-      
-      unless text.blank?
-        struct = parse(text, :p => !!(text =~ /\n\n/))
-        struct.size > 1 ? struct : struct.first
       end
     end
 end
