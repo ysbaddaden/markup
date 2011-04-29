@@ -1,22 +1,40 @@
 # encoding: utf-8
+require 'active_support/core_ext/class'
 
 # TODO: parse inline markup: links and images.
 # IMPROVE: generate table of content from headings.
 class Markup
   attr_accessor :input_string
 
-  HEADING_RE   = /\A(=+)\s*(.+?)\s*\Z/
+  cattr_accessor :heading_re
+  self.heading_re = /\A(=+)\s*(.+?)\s*\Z/
 
-  PRE_RE       = /\A[ ]{4}/
-  PRE_CLEAN    = /^[ ]{4}/
+  cattr_accessor :pre_re, :pre_clean
+  self.pre_re    = /\A[ ]{4}/
+  self.pre_clean = /^[ ]{4}/
 
-  QUOTE_RE     = /\A> /
-  QUOTE_CLEAN  = /^> /
+  cattr_accessor :quote_re, :quote_clean
+  self.quote_re    = /\A> /
+  self.quote_clean = /^> /
 
-  LIST_RE      = /^([#*-]) /
-  LIST_SPLIT   = /^[#*-] /
-  LIST_CLEAN   = /^[ ]{2}/
-  NESTED_BLOCK = /\A(.*?)\n([-*#=>] .*)\Z/m
+  cattr_accessor :list_re, :list_split, :list_clean, :nested_block
+  self.list_re      = /^([#*-]) /
+  self.list_split   = /^[#*-] /
+  self.list_clean   = /^[ ]{2}/
+  self.nested_block = /\A(.*?)\n([-*#=>] .*)\Z/m
+
+  cattr_accessor :inlines, :inlines_re
+#  self.inlines = { :b => "**", :i => "//", :u => "__", :s => "~~", :code => "`" }
+  self.inlines = { "**" => :b, "//" => :i, "__" => :u, "~~" => :s, "`" => :code }
+
+  def self.inlines_re
+    if @inlines_re.nil?
+      str = inlines.keys.map { |s| Regexp.escape(s) }.join("|")
+      @inlines_re = Regexp.new("(#{str})([^\\s].+?[^\\s])\\1")
+    end
+    
+    @inlines_re
+  end
 
   def initialize(input_string)
     self.input_string = input_string
@@ -43,16 +61,16 @@ class Markup
         next if str.blank?
         
         case str
-        when HEADING_RE
+        when self.class.heading_re
           [ "h#{$1.size}".to_sym, $2 ]
         
-        when PRE_RE
-          [ :pre, str.gsub(PRE_CLEAN, '') ]
+        when self.class.pre_re
+          [ :pre, str.gsub(self.class.pre_clean, '') ]
         
-        when QUOTE_RE
+        when self.class.quote_re
           [ :blockquote, parse_blockquote(str) ]
         
-        when LIST_RE
+        when self.class.list_re
           [ $1 == "#" ? :ol : :ul, parse_list(str) ]
         
         else
@@ -63,11 +81,11 @@ class Markup
     end
 
     def parse_list(text)
-      text.split(LIST_SPLIT).collect do |str|
+      text.split(self.class.list_split).collect do |str|
         next if str.blank?
         
-        str.gsub!(LIST_CLEAN, "")
-        item, str = $1, $2 if str =~ NESTED_BLOCK
+        str.gsub!(self.class.list_clean, "")
+        item, str = $1, $2 if str =~ self.class.nested_block
         
         struct = parse_blocks(str, :p => !!(str =~ /\n\n/)) unless str.blank?
         struct.unshift(parse_inlines(item)) if item
@@ -77,7 +95,7 @@ class Markup
     end
 
     def parse_blockquote(text)
-      text.gsub!(QUOTE_CLEAN, '')
+      text.gsub!(self.class.quote_clean, '')
       
       unless text.blank?
         struct = parse_blocks(text, :p => !!(text =~ /\n\n/))
@@ -86,23 +104,18 @@ class Markup
     end
 
     def parse_inlines(str)
-#      parts = str.split(/\s*(\*\*|\/\/|__|~~|`)([^\s].+?[^\s])\1\s*/)
-      parts = str.split(/(\*\*|\/\/|__|~~|`)([^\s].+?[^\s])\1/)
+      parts = str.split(self.class.inlines_re)
       spans = []
       
       i = 0
       until parts[i].nil?
-        case parts[i]
-        when '**'
-          spans << [ :b, parse_inlines(parts[i += 1]) ]
-        when '//'
-          spans << [ :i, parse_inlines(parts[i += 1]) ]
-        when '__'
-          spans << [ :u, parse_inlines(parts[i += 1]) ]
-        when '~~'
-          spans << [ :s, parse_inlines(parts[i += 1]) ]
-        when '`'
-          spans << [ :code, parts[i += 1] ]
+        if self.class.inlines.has_key?(parts[i])
+          tag = self.class.inlines[parts[i]]
+          if tag == :code
+            spans <<  [ tag, parts[i += 1] ]
+          else
+            spans <<  [ tag, parse_inlines(parts[i += 1]) ]
+          end
         else
           spans << self.class.smart_punctuation(parts[i]) unless parts[i].blank?
         end
