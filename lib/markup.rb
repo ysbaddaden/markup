@@ -1,10 +1,11 @@
 # encoding: utf-8
 require 'active_support/core_ext/class'
+require 'markup/html'
 
 # TODO: parse inline markup: links and images.
 # IMPROVE: generate table of content from headings.
 class Markup
-  attr_accessor :input_string
+  include HTML
 
   cattr_accessor :heading_re
   self.heading_re = /\A(=+)\s*(.+?)\s*\Z/
@@ -23,18 +24,10 @@ class Markup
   self.list_clean   = /^[ ]{2}/
   self.nested_block = /\A(.*?)\n([-*#=>] .*)\Z/m
 
-  cattr_accessor :inlines, :inlines_re
-#  self.inlines = { :b => "**", :i => "//", :u => "__", :s => "~~", :code => "`" }
+  cattr_accessor :inlines
   self.inlines = { "**" => :b, "//" => :i, "__" => :u, "~~" => :s, "`" => :code }
 
-  def self.inlines_re
-    if @inlines_re.nil?
-      str = inlines.keys.map { |s| Regexp.escape(s) }.join("|")
-      @inlines_re = Regexp.new("(#{str})([^\\s].+?[^\\s])\\1")
-    end
-    
-    @inlines_re
-  end
+  attr_accessor :input_string
 
   def initialize(input_string)
     self.input_string = input_string
@@ -44,15 +37,14 @@ class Markup
     parse_blocks(input_string, options)
   end
 
-  def to_html(options = {})
-    str = _to_html(parse, options).strip
-    str.respond_to?(:html_safe) ? str.html_safe : str
-  end
-
   protected
-    # Splits a text for block elements.
-    def split(text)
-      text.sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
+    def self.inlines_re
+      if @inlines_re.nil?
+        str = inlines.keys.map { |s| Regexp.escape(s) }.join("|")
+        @inlines_re = Regexp.new("(#{str})([^\\s].+?[^\\s])\\1")
+      end
+      
+      @inlines_re
     end
 
     # Parses text for block elements to the internal AST.
@@ -78,6 +70,11 @@ class Markup
           options[:p] == false ? str : [ :p, str ]
         end
       end.compact
+    end
+
+    # Splits a text for block elements.
+    def split(text)
+      text.sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
     end
 
     def parse_list(text)
@@ -138,25 +135,5 @@ class Markup
         gsub(/\s+(;|\?|\!|»)/, ' \1').             # french fine nbsp (U+202F)
         gsub(/«\s+/, '\1 ').                       # french quotation fine nbsp (U+202F)
         gsub(/(\s—\s+)(.+?)(\s+—\s)/, ' — \2 — ')  # french em dashes (with fine nbsp)
-    end
-
-    def _to_html(struct, options = {})
-      deep = options[:deep] || 0
-      
-      html = struct.collect do |tag, struct|
-        if tag.is_a?(String)
-          tag
-        else
-          content = struct.is_a?(Array) ? _to_html(struct, options.merge(:deep => deep + 1)) : struct
-          "<#{tag}>#{content}</#{tag}>"
-        end
-      end
-      
-      if options[:indent]
-        indent  = "  "
-        html.insert(0, "").join("\n#{indent * deep}") + "\n" + (indent * [0, deep - 1].max)
-      else
-        html.join
-      end
     end
 end
