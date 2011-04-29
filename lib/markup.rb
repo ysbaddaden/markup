@@ -1,4 +1,6 @@
-# TODO: parse inline markup: bold, italic, underline, links and images.
+# encoding: utf-8
+
+# TODO: parse inline markup: links and images.
 # IMPROVE: generate table of content from headings.
 class Markup
   attr_accessor :input_string
@@ -84,7 +86,7 @@ class Markup
     end
 
     def parse_inlines(str)
-      parts = str.split(/\s*([*\/]{2})(.+?)\1\s*/)
+      parts = str.split(/\s*(\*\*|\/\/|__|~~|`)([^\s].+?[^\s])\1\s*/)
       spans = []
       
       i = 0
@@ -94,8 +96,14 @@ class Markup
           spans << [ :b, parse_inlines(parts[i += 1]) ]
         when '//'
           spans << [ :i, parse_inlines(parts[i += 1]) ]
+        when '__'
+          spans << [ :u, parse_inlines(parts[i += 1]) ]
+        when '~~'
+          spans << [ :s, parse_inlines(parts[i += 1]) ]
+        when '`'
+          spans << [ :code, parts[i += 1] ]
         else
-          spans << parts[i] unless parts[i].blank?
+          spans << self.class.smart_punctuation(parts[i]) unless parts[i].blank?
         end
         
         i += 1
@@ -103,6 +111,19 @@ class Markup
       
       spans.compact
       spans.size > 1 ? spans : spans.first
+    end
+
+    def self.smart_punctuation(text)
+      text.
+        gsub(/\.\.\./, '…').                       # ellipsis
+        gsub(/ - /, ' – ').gsub(/--/, '—').        # en & em dashes
+        gsub(/(\S)'(\S)/, '\1’\2').                # apostrophes
+        gsub(/'(\S)/, '‘\1').gsub(/(\S)'/, '\1’'). # single quotation marks
+        gsub(/"(\S)/, '“\1').gsub(/(\S)"/, '\1”'). # double quotation marks
+        gsub(/\s:/, ' :').                         # french nbsp (U+00A0)
+        gsub(/\s+(;|\?|\!|»)/, ' \1').             # french fine nbsp (U+202F)
+        gsub(/«\s+/, '\1 ').                       # french quotation fine nbsp (U+202F)
+        gsub(/(\s—\s+)(.+?)(\s+—\s)/, ' — \2 — ')  # french em dashes (with fine nbsp)
     end
 
     def _to_html(struct, options = {})

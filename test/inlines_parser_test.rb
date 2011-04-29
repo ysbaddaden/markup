@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ParserInlinesTest < ActiveSupport::TestCase
+class InlinesParserTest < ActiveSupport::TestCase
   test "should parse bold" do
     assert_equal [[:p, [ "lorem ipsum", [:b, "dolor sit"], "amet" ]]],
       Markup.new("lorem ipsum **dolor sit** amet").parse
@@ -9,6 +9,26 @@ class ParserInlinesTest < ActiveSupport::TestCase
   test "should parse italic" do
     assert_equal [[:p, [ "lorem", [:i, "ipsum"], "dolor sit amet" ]]],
       Markup.new("lorem //ipsum// dolor sit amet").parse
+  end
+
+  test "should parse underline" do
+    assert_equal [[:p, [ "lorem", [:u, "ipsum"], "dolor sit amet" ]]],
+      Markup.new("lorem __ipsum__ dolor sit amet").parse
+  end
+
+  test "should parse code" do
+    assert_equal [[:p, [ "lorem", [:code, "ipsum"], "dolor sit amet" ]]],
+      Markup.new("lorem `ipsum` dolor sit amet").parse
+  end
+
+  test "should not parse within code" do
+    assert_equal [[:p, [ "lorem", [:code, "ipsum **dolor** sit"], "amet" ]]],
+      Markup.new("lorem `ipsum **dolor** sit` amet").parse
+  end
+
+  test "should parse strikethrough" do
+    assert_equal [[:p, [ "lorem", [:s, "ipsum"], "dolor sit amet" ]]],
+      Markup.new("lorem ~~ipsum~~ dolor sit amet").parse
   end
 
   test "should parse bold within italic" do

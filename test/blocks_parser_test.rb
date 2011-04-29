@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class ParserTest < ActiveSupport::TestCase
+class BlocksParserTest < ActiveSupport::TestCase
   test "should clear starting blank lines" do
     assert_equal [[:h1, "abcd"]], Markup.new("\n  \n\n= abcd\n").parse
   end
