@@ -1,11 +1,6 @@
 require 'test_helper'
 
 class HtmlTest < ActiveSupport::TestCase
-  test "inlines" do
-    assert_equal "<h1>Heading 1</h1><p>The very <b>first</b> paragraph.</p>",
-      Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html
-  end
-
   test "blocks" do
     html = "<h1>Heading 1</h1>" +
       "<p>The very first paragraph.</p>" +
@@ -61,4 +56,14 @@ class HtmlTest < ActiveSupport::TestCase
 </ol>"
   assert_equal html, Markup.new(fixture(:blocks_in_nested_lists)).to_html(:indent => true)
   end
+
+  test "inlines" do
+    assert_equal "<h1>Heading 1</h1><p>The very <b>first</b> paragraph.</p>",
+      Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html
+  end
+
+#  test "indentation with inlines" do
+#    assert_equal "<h1>Heading 1</h1>\n<p>The very <b>first</b> paragraph.</p>",
+#      Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html(:indent => true)
+#  end
 end
