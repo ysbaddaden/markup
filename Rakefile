@@ -7,7 +7,7 @@ task :default => :test
 desc 'Test Markup.'
 Rake::TestTask.new(:test) do |t|
   t.libs << 'test'
-  t.pattern = 'test/*_test.rb'
+  t.pattern = 'test/**/*_test.rb'
   t.verbose = true
 end
 

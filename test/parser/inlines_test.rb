@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class InlinesParserTest < ActiveSupport::TestCase
+class InlinesTest < ActiveSupport::TestCase
   test "should parse bold" do
     assert_equal [[:p, [ "lorem ipsum", [:b, "dolor sit"], "amet" ]]],
       Markup.new("lorem ipsum **dolor sit** amet").parse
