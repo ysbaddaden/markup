@@ -1,7 +1,12 @@
 require 'test_helper'
 
 class HtmlTest < ActiveSupport::TestCase
-  test "formatter" do
+  test "inlines" do
+    assert_equal "<h1>Heading 1</h1><p>The very <b>first</b> paragraph.</p>",
+      Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html
+  end
+
+  test "blocks" do
     html = "<h1>Heading 1</h1>" +
       "<p>The very first paragraph.</p>" +
       "<h2>Heading 2</h2>" +

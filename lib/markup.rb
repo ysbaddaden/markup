@@ -86,7 +86,8 @@ class Markup
     end
 
     def parse_inlines(str)
-      parts = str.split(/\s*(\*\*|\/\/|__|~~|`)([^\s].+?[^\s])\1\s*/)
+#      parts = str.split(/\s*(\*\*|\/\/|__|~~|`)([^\s].+?[^\s])\1\s*/)
+      parts = str.split(/(\*\*|\/\/|__|~~|`)([^\s].+?[^\s])\1/)
       spans = []
       
       i = 0
