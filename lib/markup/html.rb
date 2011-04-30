@@ -1,6 +1,15 @@
 class Markup
+  # FIXME: indentation of inline elements isn't very sexy.
   module HTML
+    # Formats text as HTML.
+    # 
+    # Available options:
+    # 
+    # - indent  - true to indent HTML tags.
+    # - heading - level of first heading type (defaults to 1)
     def to_html(options = {})
+      options[:headings] -= 1 if options[:headings]
+      
       str = _to_html(parse, options).strip
       str.respond_to?(:html_safe) ? str.html_safe : str
     end
@@ -11,9 +20,15 @@ class Markup
         
         html = struct.collect do |tag, struct|
           if tag.is_a?(String)
-            tag
+            escape_html_chars(tag)
           else
-            content = struct.is_a?(Array) ? _to_html(struct, options.merge(:deep => deep + 1)) : struct
+            if struct.is_a?(Array)
+              content = _to_html(struct, options.merge(:deep => deep + 1))
+            else
+              content = escape_html_chars(struct)
+            end
+            
+            tag = "h#{$1.to_i + options[:headings]}" if options[:headings] && tag.to_s =~ /^h(\d)$/
             "<#{tag}>#{content}</#{tag}>"
           end
         end
@@ -24,6 +39,10 @@ class Markup
         else
           html.join
         end
+      end
+
+      def escape_html_chars(text)
+        text.gsub(/&/, '&amp;').gsub(/>/, '&gt;').gsub(/</, '&lt;')
       end
   end
 end

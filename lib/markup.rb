@@ -2,7 +2,7 @@
 require 'active_support/core_ext/class'
 require 'markup/html'
 
-# TODO: parse inline markup: links and images.
+# TODO: parse links and images.
 # IMPROVE: generate table of content from headings.
 class Markup
   include HTML

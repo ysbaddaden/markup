@@ -1,6 +1,11 @@
 require 'test_helper'
 
 class HtmlTest < ActiveSupport::TestCase
+  test "should escape html chars" do
+    assert_equal "<p>bla bla &lt;bla&gt; &amp; again</p>", Markup.new("bla bla <bla> & again").to_html
+    assert_equal "<ul><li>bla bla &lt;bla&gt; &amp; again</li></ul>", Markup.new("- bla bla <bla> & again").to_html
+  end
+
   test "blocks" do
     html = "<h1>Heading 1</h1>" +
       "<p>The very first paragraph.</p>" +
@@ -54,7 +59,15 @@ class HtmlTest < ActiveSupport::TestCase
     </ul>
   </li>
 </ol>"
-  assert_equal html, Markup.new(fixture(:blocks_in_nested_lists)).to_html(:indent => true)
+    assert_equal html, Markup.new(fixture(:blocks_in_nested_lists)).to_html(:indent => true)
+  end
+
+  test "headings level" do
+    assert_equal "<h3>Heading 1</h3><p>The very <b>first</b> paragraph.</p>",
+      Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html(:headings => 3)
+    
+    assert_equal "<h1>Heading 1</h1><p>The very <b>first</b> paragraph.</p>",
+      Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html(:headings => 1)
   end
 
   test "inlines" do
