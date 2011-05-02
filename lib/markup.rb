@@ -144,7 +144,7 @@ class Markup
       spans.size > 1 ? spans : spans.first
     end
 
-    # IMPROVE: merge parse_links into parse_inlines.
+    # IMPROVE: merge parse_links into parse_inlines?
     def parse_links(text)
       parts = text.split(/(\[\[)(.+?)\]\]/)
       spans = []
@@ -152,8 +152,9 @@ class Markup
       i = 0;
       while parts[i]
         if parts[i] == '[['
-          href = parts[i + 1]
-          spans << [ :a, { :href => href }, [ href ] ]
+          href, contents = parts[i + 1].split('|', 2)
+          contents = contents.nil? ? href : smart_punctuation(contents)
+          spans << [ :a, [ contents ], { :href => href } ]
           i += 1
         elsif !parts[i].blank?
           spans << smart_punctuation(parts[i])
@@ -174,8 +175,8 @@ class Markup
         gsub(/'(\S)/, '‘\1').gsub(/(\S)'/, '\1’'). # single quotation marks
         gsub(/"(\S)/, '“\1').gsub(/(\S)"/, '\1”'). # double quotation marks
         gsub(/\s:/, ' :').                         # french nbsp (U+00A0)
-        gsub(/\s+(;|\?|\!|»)/, ' \1').             # french fine nbsp (U+202F)
-        gsub(/«\s+/, '\1 ').                       # french quotation fine nbsp (U+202F)
-        gsub(/(\s—\s+)(.+?)(\s+—\s)/, ' — \2 — ')  # french em dashes (with fine nbsp)
+        gsub(/\s+(;|\?|\!|»)/, ' \1').             # french thin nbsp (U+202F)
+        gsub(/«\s+/, '\1 ').                       # french quotation thin nbsp (U+202F)
+        gsub(/(\s—\s+)(.+?)(\s+—\s)/, ' — \2 — ')  # french em dashes (with thin nbsp)
     end
 end

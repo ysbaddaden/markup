@@ -48,16 +48,26 @@ class InlinesTest < ActiveSupport::TestCase
 
 
   test "should parse link" do
-    assert_equal [[:p, [ :a, { :href => "http://www.wikicreole.org/" }, [ "http://www.wikicreole.org/" ] ]]],
+    assert_equal [[:p, [ :a, [ "http://www.wikicreole.org/" ], { :href => "http://www.wikicreole.org/" } ]]],
       Markup.new("[[http://www.wikicreole.org/]]").parse
+  end
+
+  test "should parse link with title" do
+    assert_equal [[:p, [ :a, [ "Creole 1.0" ], { :href => "http://www.wikicreole.org/" } ]]],
+      Markup.new("[[http://www.wikicreole.org/|Creole 1.0]]").parse
+  end
+
+  test "should parse bold link" do
+    assert_equal [[:p, [:b, [ :a, [ "Creole 1.0" ], { :href => "http://www.wikicreole.org/" } ]]]],
+      Markup.new("**[[http://www.wikicreole.org/|Creole 1.0]]**").parse
   end
 
   test "should parse links" do
     struct = [[:p, [
       "This is a link ",
-      [:a, { :href => "http://www.wikicreole.org/" }, [ "http://www.wikicreole.org/" ]],
+      [ :a, ["http://www.wikicreole.org/" ], { :href => "http://www.wikicreole.org/" } ],
       " and another one ",
-      [:a, { :href => "http://rubygems.org" }, [ "http://rubygems.org" ]],
+      [ :a, ["http://rubygems.org"], { :href => "http://rubygems.org" } ],
       "."
     ] ]]
     
