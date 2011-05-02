@@ -121,7 +121,7 @@ class Markup
           spans << [ :a, contents, { :href => url } ]
         when '{{'
           url, alt = parse_image(parts[i+=1])
-          spans << [ :img, "", { :src => url, :alt => alt } ]
+          spans << [ :img, nil, { :src => url, :alt => alt } ]
         else
           unless parts[i].empty?
             part = parts[i].blank? ? " " : smart_punctuation(parts[i])
@@ -137,7 +137,7 @@ class Markup
         i += 1
       end
       
-      spans.size > 1 ? spans : spans.first
+      (spans.size == 1 && spans[0].is_a?(String)) ? spans.first : spans
     end
 
     def parse_link(text)

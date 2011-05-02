@@ -57,17 +57,17 @@ class InlinesTest < ActiveSupport::TestCase
   end
 
   test "should parse link" do
-    assert_equal [[:p, [ :a, "http://www.wikicreole.org/", { :href => "http://www.wikicreole.org/" } ]]],
+    assert_equal [[:p, [[:a, "http://www.wikicreole.org/", { :href => "http://www.wikicreole.org/" } ]]]],
       Markup.new("[[http://www.wikicreole.org/]]").parse
   end
 
   test "should parse link with contents" do
-    assert_equal [[:p, [ :a, "Creole 1.0", { :href => "http://www.wikicreole.org/" } ]]],
+    assert_equal [[:p, [[:a, "Creole 1.0", { :href => "http://www.wikicreole.org/" } ]]]],
       Markup.new("[[http://www.wikicreole.org/|Creole 1.0]]").parse
   end
 
   test "should parse bold link" do
-    assert_equal [[:p, [:b, [ :a, "Creole 1.0", { :href => "http://www.wikicreole.org/" } ]]]],
+    assert_equal [[:p, [[:b, [[ :a, "Creole 1.0", { :href => "http://www.wikicreole.org/" } ]]]]]],
       Markup.new("**[[http://www.wikicreole.org/|Creole 1.0]]**").parse
   end
 
@@ -85,12 +85,12 @@ class InlinesTest < ActiveSupport::TestCase
   end
 
   test "should parse image" do
-    assert_equal [[:p, [:img, "", { :src => "/images/alml.png", :alt => nil }]]],
+    assert_equal [[:p, [[:img, nil, { :src => "/images/alml.png", :alt => nil }]]]],
       Markup.new("{{/images/alml.png}}").parse
   end
 
   test "should parse image with alt" do
-    assert_equal [[:p, [:img, "", { :src => "/images/alml.png", :alt => "This is an image" }]]],
+    assert_equal [[:p, [[:img, nil, { :src => "/images/alml.png", :alt => "This is an image" }]]]],
       Markup.new("{{/images/alml.png|This is an image}}").parse
   end
 end

@@ -84,4 +84,9 @@ class HtmlTest < ActiveSupport::TestCase
     assert_equal '<p>This is a link <a href="http://www.wikicreole.org/">http://www.wikicreole.org/</a> and another one <a href="http://rubygems.org">http://rubygems.org</a>.</p>',
       Markup.new("This is a link [[http://www.wikicreole.org/]] and another one [[http://rubygems.org]].").to_html
   end
+
+  test "images" do
+    assert_equal '<p><img alt="" src="/images/alml.png"/></p>',
+      Markup.new("{{/images/alml.png}}").to_html
+  end
 end

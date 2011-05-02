@@ -1,5 +1,6 @@
+require 'active_support/core_ext/hash'
+
 class Markup
-  # FIXME: indentation of inline elements isn't very sexy.
   module HTML
     # Formats text as HTML.
     # 
@@ -7,6 +8,8 @@ class Markup
     # 
     # - indent  - true to indent HTML tags.
     # - heading - level of first heading type (defaults to 1)
+    # 
+    # FIXME: indentation of inline elements isn't very sexy.
     def to_html(options = {})
       options[:headings] -= 1 if options[:headings]
       
@@ -22,15 +25,20 @@ class Markup
           if tag.is_a?(String)
             escape_html_chars(tag)
           else
-            if struct.is_a?(Array)
-              content = _to_html(struct, options.merge(:deep => deep + 1))
-            else
-              content = escape_html_chars(struct)
-            end
+            attributes = attributes.stringify_keys.sort.map { |k,v| " #{k}=\"#{v}\"" }.join unless attributes.nil?
             
-            tag = "h#{$1.to_i + options[:headings]}" if options[:headings] && tag.to_s =~ /^h(\d)$/
-            attributes = attributes.map { |k,v| " #{k}=\"#{v}\"" }.join unless attributes.nil?
-            "<#{tag}#{attributes}>#{content}</#{tag}>"
+            if struct.nil?
+              "<#{tag}#{attributes}/>"
+            else
+              if struct.is_a?(Array)
+                content = _to_html(struct, options.merge(:deep => deep + 1))
+              else
+                content = escape_html_chars(struct)
+              end
+              
+              tag = "h#{$1.to_i + options[:headings]}" if options[:headings] && tag.to_s =~ /^h(\d)$/
+              "<#{tag}#{attributes}>#{content}</#{tag}>"
+            end
           end
         end
         
