@@ -79,4 +79,17 @@ class HtmlTest < ActiveSupport::TestCase
 #    assert_equal "<h1>Heading 1</h1>\n<p>The very <b>first</b> paragraph.</p>",
 #      Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html(:indent => true)
 #  end
+
+  test "links" do
+    struct = [[:p, [
+      "This is a link ",
+      [ :a, ["http://www.wikicreole.org/" ], { :href => "http://www.wikicreole.org/" } ],
+      " and another one ",
+      [ :a, ["http://rubygems.org"], { :href => "http://rubygems.org" } ],
+      "."
+    ] ]]
+    
+    assert_equal '<p>This is a link <a href="http://www.wikicreole.org/">http://www.wikicreole.org/</a> and another one <a href="http://rubygems.org">http://rubygems.org</a>.</p>',
+      Markup.new("This is a link [[http://www.wikicreole.org/]] and another one [[http://rubygems.org]].").to_html
+  end
 end
