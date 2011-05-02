@@ -45,4 +45,23 @@ class InlinesTest < ActiveSupport::TestCase
     assert_equal [[ :ul, [ [:li, [[:b, "item"], " 1"]], [:li, [[:i, "item"], " 2"]] ] ]],
       Markup.new("- **item** 1\n- //item// 2").parse
   end
+
+
+  test "should parse link" do
+    assert_equal [[:p, [ :a, { :href => "http://www.wikicreole.org/" }, [ "http://www.wikicreole.org/" ] ]]],
+      Markup.new("[[http://www.wikicreole.org/]]").parse
+  end
+
+  test "should parse links" do
+    struct = [[:p, [
+      "This is a link ",
+      [:a, { :href => "http://www.wikicreole.org/" }, [ "http://www.wikicreole.org/" ]],
+      " and another one ",
+      [:a, { :href => "http://rubygems.org" }, [ "http://rubygems.org" ]],
+      "."
+    ] ]]
+    
+    assert_equal struct,
+      Markup.new("This is a link [[http://www.wikicreole.org/]] and another one [[http://rubygems.org]].").parse
+  end
 end

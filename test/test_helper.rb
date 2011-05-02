@@ -1,10 +1,11 @@
 require 'rubygems'
-gem 'activesupport', '~> 3.0.0'
+require "bundler/setup"
 
 require 'test/unit'
 require 'active_support/test_case'
+require 'active_support/core_ext/class'
 
-require File.expand_path('../../lib/markup', __FILE__)
+require 'markup'
 
 class ActiveSupport::TestCase
   cattr_accessor :fixture_path
@@ -15,3 +16,4 @@ class ActiveSupport::TestCase
     File.read("#{fixture_path}/#{name}.#{type}")
   end
 end
+

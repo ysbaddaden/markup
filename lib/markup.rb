@@ -41,7 +41,7 @@ class Markup
     def self.inlines_re
       if @inlines_re.nil?
         str = inlines.keys.map { |s| Regexp.escape(s) }.join("|")
-        @inlines_re = Regexp.new("(#{str})([^\\s].+?[^\\s])\\1")
+        @inlines_re = Regexp.new("(^|\s)(#{str})([^\\s].+?[^\\s])\\2(\s|$)")
       end
       
       @inlines_re
@@ -74,7 +74,7 @@ class Markup
 
     # Splits a text for block elements.
     def split(text)
-      text.sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
+      text.gsub(/\r\n/, "\n").sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
     end
 
     def parse_list(text)
@@ -108,23 +108,65 @@ class Markup
       until parts[i].nil?
         if self.class.inlines.has_key?(parts[i])
           tag = self.class.inlines[parts[i]]
+          
           if tag == :code
-            spans <<  [ tag, parts[i += 1] ]
+            spans << [ tag, parts[i += 1] ]
           else
-            spans <<  [ tag, parse_inlines(parts[i += 1]) ]
+            contents = parse_inlines(parts[i += 1])
+            spans << [ tag, contents ]
           end
-        else
-          spans << self.class.smart_punctuation(parts[i]) unless parts[i].blank?
+        elsif !parts[i].blank?
+#          spans << smart_punctuation(parts[i])
+          spans << parse_links(parts[i])
+        elsif !parts[i].empty?
+          spans << " "
         end
         
         i += 1
       end
       
-      spans.compact
+      # contacts text with spaces lost during split. those spaces could be
+      # forgotten altogether, and added automatically by the formatters
+      # when outputing text & inline elements (but not blocks)
+      
+      i = 0
+      while spans[i]
+        if spans[i].is_a?(String) && spans[i + 1].is_a?(String)
+          spans[i] += spans[i + 1]
+          spans[i + 1] = nil
+          i += 2
+        else
+          i += 1
+        end
+      end
+      
+      spans.compact!
       spans.size > 1 ? spans : spans.first
     end
 
-    def self.smart_punctuation(text)
+    # IMPROVE: merge parse_links into parse_inlines.
+    def parse_links(text)
+      parts = text.split(/(\[\[)(.+?)\]\]/)
+      spans = []
+      
+      i = 0;
+      while parts[i]
+        if parts[i] == '[['
+          href = parts[i + 1]
+          spans << [ :a, { :href => href }, [ href ] ]
+          i += 1
+        elsif !parts[i].blank?
+          spans << smart_punctuation(parts[i])
+        end
+        
+        i += 1
+      end
+      
+      spans.compact!
+      spans.size > 1 ? spans : spans.first
+    end
+
+    def smart_punctuation(text)
       text.
         gsub(/\.\.\./, '…').                       # ellipsis
         gsub(/ - /, ' – ').gsub(/--/, '—').        # en & em dashes
