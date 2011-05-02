@@ -2,7 +2,8 @@
 require 'active_support/core_ext/class'
 require 'markup/html'
 
-# TODO: parse links and images.
+# TODO: parse tables |= head 1 |=head2\n|row 1 cell 1|row 1 cell 2\n
+# TODO: headings should act as anchors (HTML formatter only?)
 # IMPROVE: generate table of content from headings.
 class Markup
   include HTML
@@ -24,8 +25,8 @@ class Markup
   self.list_clean   = /^[ ]{2}/
   self.nested_block = /\A(.*?)\n([-*#=>] .*)\Z/m
 
-  cattr_accessor :inlines
-  self.inlines = { "**" => :b, "//" => :i, "__" => :u, "~~" => :s, "`" => :code }
+  cattr_accessor :inlines_re
+  self.inlines_re = /(?:(^|\s)(\*\*|\/\/|__|~~|`|\^\^|,,)(.+?)\2(\s|$)|(\[\[)(.+?)\]\]|(\{\{)(.+?)\}\})/
 
   attr_accessor :input_string
 
@@ -38,15 +39,6 @@ class Markup
   end
 
   protected
-    def self.inlines_re
-      if @inlines_re.nil?
-        str = inlines.keys.map { |s| Regexp.escape(s) }.join("|")
-        @inlines_re = Regexp.new("(^|\s)(#{str})([^\\s].+?[^\\s])\\2(\s|$)")
-      end
-      
-      @inlines_re
-    end
-
     # Parses text for block elements to the internal AST.
     def parse_blocks(text, options = {})
       split(text).collect do |str|
@@ -77,6 +69,7 @@ class Markup
       text.gsub(/\r\n/, "\n").sub(/\A(?:\s*?\n)*/m, "").split(/\n\n/)
     end
 
+    # Parses a list block. Will parse nested blocks.
     def parse_list(text)
       text.split(self.class.list_split).collect do |str|
         next if str.blank?
@@ -91,6 +84,7 @@ class Markup
       end.compact
     end
 
+    # Parses a blockquote block. Will parse nested blocks.
     def parse_blockquote(text)
       text.gsub!(self.class.quote_clean, '')
       
@@ -100,71 +94,62 @@ class Markup
       end
     end
 
+    # Parses a block of text for inline elements (bold, italic, links, etc.)
     def parse_inlines(str)
       parts = str.split(self.class.inlines_re)
       spans = []
       
       i = 0
       until parts[i].nil?
-        if self.class.inlines.has_key?(parts[i])
-          tag = self.class.inlines[parts[i]]
-          
-          if tag == :code
-            spans << [ tag, parts[i += 1] ]
-          else
-            contents = parse_inlines(parts[i += 1])
-            spans << [ tag, contents ]
+        case parts[i]
+        when '**'
+          spans << [ :b,   parse_inlines(parts[i+=1]) ]
+        when '//'
+          spans << [ :i,   parse_inlines(parts[i+=1]) ]
+        when '__'
+          spans << [ :u,   parse_inlines(parts[i+=1]) ]
+        when '~~'
+          spans << [ :s,   parse_inlines(parts[i+=1]) ]
+        when '^^'
+          spans << [ :sup, parse_inlines(parts[i+=1]) ]
+        when ',,'
+          spans << [ :sub, parse_inlines(parts[i+=1]) ]
+        when '`'
+          spans << [ :code, parts[i+=1] ]
+        when '[['
+          url, contents = parse_link(parts[i+=1])
+          spans << [ :a, contents, { :href => url } ]
+        when '{{'
+          url, alt = parse_image(parts[i+=1])
+          spans << [ :img, "", { :src => url, :alt => alt } ]
+        else
+          unless parts[i].empty?
+            part = parts[i].blank? ? " " : smart_punctuation(parts[i])
+            
+            if spans.last.is_a?(String)
+              spans[spans.size - 1] += part
+            else
+              spans << part
+            end
           end
-        elsif !parts[i].blank?
-#          spans << smart_punctuation(parts[i])
-          spans << parse_links(parts[i])
-        elsif !parts[i].empty?
-          spans << " "
         end
         
         i += 1
       end
       
-      # contacts text with spaces lost during split. those spaces could be
-      # forgotten altogether, and added automatically by the formatters
-      # when outputing text & inline elements (but not blocks)
-      
-      i = 0
-      while spans[i]
-        if spans[i].is_a?(String) && spans[i + 1].is_a?(String)
-          spans[i] += spans[i + 1]
-          spans[i + 1] = nil
-          i += 2
-        else
-          i += 1
-        end
-      end
-      
-      spans.compact!
       spans.size > 1 ? spans : spans.first
     end
 
-    # IMPROVE: merge parse_links into parse_inlines?
-    def parse_links(text)
-      parts = text.split(/(\[\[)(.+?)\]\]/)
-      spans = []
-      
-      i = 0;
-      while parts[i]
-        if parts[i] == '[['
-          href, contents = parts[i + 1].split('|', 2)
-          contents = contents.nil? ? href : smart_punctuation(contents)
-          spans << [ :a, [ contents ], { :href => href } ]
-          i += 1
-        elsif !parts[i].blank?
-          spans << smart_punctuation(parts[i])
-        end
-        
-        i += 1
-      end
-      
-      spans.compact!
-      spans.size > 1 ? spans : spans.first
+    def parse_link(text)
+      url, contents = text.split('|', 2)
+      contents = contents.nil? ? url : smart_punctuation(contents)
+      [url, contents]
+    end
+
+    def parse_image(text)
+      url, alt = text.split('|', 2)
+      contents = contents.nil? ? url : smart_punctuation(alt)
+      [url, alt]
     end
 
     def smart_punctuation(text)

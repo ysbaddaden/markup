@@ -31,6 +31,16 @@ class InlinesTest < ActiveSupport::TestCase
       Markup.new("lorem ~~ipsum~~ dolor sit amet").parse
   end
 
+  test "should parse superscript" do
+    assert_equal [[:p, [[:sup, "lorem ipsum dolor"], " sit amet" ]]],
+      Markup.new("^^lorem ipsum dolor^^ sit amet").parse
+  end
+
+  test "should parse subscript" do
+    assert_equal [[:p, [[:sub, "lorem ipsum dolor"], " sit amet" ]]],
+      Markup.new(",,lorem ipsum dolor,, sit amet").parse
+  end
+
   test "should parse bold within italic" do
     assert_equal [[:p, [ "lorem ", [:i, ["ipsum ", [:b, "dolor sit"]]], " amet" ]]],
       Markup.new("lorem //ipsum **dolor sit**// amet").parse
@@ -46,32 +56,41 @@ class InlinesTest < ActiveSupport::TestCase
       Markup.new("- **item** 1\n- //item// 2").parse
   end
 
-
   test "should parse link" do
-    assert_equal [[:p, [ :a, [ "http://www.wikicreole.org/" ], { :href => "http://www.wikicreole.org/" } ]]],
+    assert_equal [[:p, [ :a, "http://www.wikicreole.org/", { :href => "http://www.wikicreole.org/" } ]]],
       Markup.new("[[http://www.wikicreole.org/]]").parse
   end
 
-  test "should parse link with title" do
-    assert_equal [[:p, [ :a, [ "Creole 1.0" ], { :href => "http://www.wikicreole.org/" } ]]],
+  test "should parse link with contents" do
+    assert_equal [[:p, [ :a, "Creole 1.0", { :href => "http://www.wikicreole.org/" } ]]],
       Markup.new("[[http://www.wikicreole.org/|Creole 1.0]]").parse
   end
 
   test "should parse bold link" do
-    assert_equal [[:p, [:b, [ :a, [ "Creole 1.0" ], { :href => "http://www.wikicreole.org/" } ]]]],
+    assert_equal [[:p, [:b, [ :a, "Creole 1.0", { :href => "http://www.wikicreole.org/" } ]]]],
       Markup.new("**[[http://www.wikicreole.org/|Creole 1.0]]**").parse
   end
 
   test "should parse links" do
     struct = [[:p, [
       "This is a link ",
-      [ :a, ["http://www.wikicreole.org/" ], { :href => "http://www.wikicreole.org/" } ],
+      [ :a, "http://www.wikicreole.org/", { :href => "http://www.wikicreole.org/" } ],
       " and another one ",
-      [ :a, ["http://rubygems.org"], { :href => "http://rubygems.org" } ],
+      [ :a, "http://rubygems.org", { :href => "http://rubygems.org" } ],
       "."
     ] ]]
     
     assert_equal struct,
       Markup.new("This is a link [[http://www.wikicreole.org/]] and another one [[http://rubygems.org]].").parse
+  end
+
+  test "should parse image" do
+    assert_equal [[:p, [:img, "", { :src => "/images/alml.png", :alt => nil }]]],
+      Markup.new("{{/images/alml.png}}").parse
+  end
+
+  test "should parse image with alt" do
+    assert_equal [[:p, [:img, "", { :src => "/images/alml.png", :alt => "This is an image" }]]],
+      Markup.new("{{/images/alml.png|This is an image}}").parse
   end
 end
