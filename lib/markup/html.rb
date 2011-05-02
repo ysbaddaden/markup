@@ -18,7 +18,7 @@ class Markup
       def _to_html(struct, options = {})
         deep = options[:deep] || 0
         
-        html = struct.collect do |tag, struct|
+        html = struct.collect do |tag, struct, attributes|
           if tag.is_a?(String)
             escape_html_chars(tag)
           else
@@ -29,7 +29,8 @@ class Markup
             end
             
             tag = "h#{$1.to_i + options[:headings]}" if options[:headings] && tag.to_s =~ /^h(\d)$/
-            "<#{tag}>#{content}</#{tag}>"
+            attributes = attributes.map { |k,v| " #{k}=\"#{v}\"" }.join unless attributes.nil?
+            "<#{tag}#{attributes}>#{content}</#{tag}>"
           end
         end
         
