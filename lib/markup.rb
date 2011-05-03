@@ -28,10 +28,11 @@ class Markup
   cattr_accessor :inlines_re
   self.inlines_re = /(?:(^|\s)(\*\*|\/\/|__|~~|`|\^\^|,,)(.+?)\2(\s|$)|(\[\[)(.+?)\]\]|(\{\{)(.+?)\}\})/
 
-  attr_accessor :input_string
+  attr_accessor :input_string, :toc
 
   def initialize(input_string)
     self.input_string = input_string
+    self.toc = []
   end
 
   def parse(options = {})
@@ -46,7 +47,9 @@ class Markup
         
         case str
         when self.class.heading_re
-          [ "h#{$1.size}".to_sym, $2 ]
+          tag = "h#{$1.size}".to_sym
+          self.toc << [ tag, $2, $2.parameterize ]
+          [ tag, $2 ]
         
         when self.class.pre_re
           [ :pre, str.gsub(self.class.pre_clean, '') ]

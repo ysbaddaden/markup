@@ -112,5 +112,18 @@ esse cillum dolore eu fugiat nulla pariatur." ],
       ]]
     ]
     assert_equal struct, Markup.new(fixture(:blocks_in_nested_lists)).parse
+    
+    require 'pp'
+  end
+
+  test "toc" do
+    m = Markup.new(fixture(:blocks_in_nested_lists)) ; m.parse
+    assert_equal [ [:h1, "Heading 1", "heading-1"], [:h2, "Heading 2", "heading-2"] ], m.toc
+  end
+
+  test "toc again" do
+    m = Markup.new(fixture(:text)) ; m.parse
+    assert_equal [ [:h1, "The standard Lorem Ipsum passage, used since the 1500s",
+      "the-standard-lorem-ipsum-passage-used-since-the-1500s"] ], m.toc
   end
 end
