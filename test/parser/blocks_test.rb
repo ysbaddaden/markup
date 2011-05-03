@@ -2,7 +2,7 @@ require 'test_helper'
 
 class BlocksTest < ActiveSupport::TestCase
   test "should clear starting blank lines" do
-    assert_equal [[:h1, "abcd"]], Markup.new("\n  \n\n= abcd\n").parse
+    assert_equal [[:h1, "abcd", {:id => "abcd"}]], Markup.new("\n  \n\n= abcd\n").parse
   end
 
   test "should skip blank blocks" do
@@ -34,12 +34,12 @@ class BlocksTest < ActiveSupport::TestCase
   end
 
   test "should parse heading" do
-    assert_equal [[:h1, "abcd"]], Markup.new("= abcd").parse
-    assert_equal [[:h2, "abcd"]], Markup.new("== abcd").parse
-    assert_equal [[:h3, "abcd"]], Markup.new("=== abcd").parse
-    assert_equal [[:h4, "abcd"]], Markup.new("==== abcd").parse
-    assert_equal [[:h5, "abcd"]], Markup.new("===== abcd").parse
-    assert_equal [[:h6, "abcd"]], Markup.new("====== abcd").parse
+    assert_equal [[:h1, "abcd", {:id => "abcd"}]], Markup.new("= abcd").parse
+    assert_equal [[:h2, "abcd", {:id => "abcd"}]], Markup.new("== abcd").parse
+    assert_equal [[:h3, "abcd", {:id => "abcd"}]], Markup.new("=== abcd").parse
+    assert_equal [[:h4, "abcd", {:id => "abcd"}]], Markup.new("==== abcd").parse
+    assert_equal [[:h5, "abcd", {:id => "abcd"}]], Markup.new("===== abcd").parse
+    assert_equal [[:h6, "abcd", {:id => "abcd"}]], Markup.new("====== abcd").parse
   end
 
   test "should parse preformated text" do
@@ -72,7 +72,7 @@ class BlocksTest < ActiveSupport::TestCase
 
   test "should parse" do
     struct = [
-      [ :h1, "The standard Lorem Ipsum passage, used since the 1500s" ],
+      [ :h1, "The standard Lorem Ipsum passage, used since the 1500s", {:id=>"the-standard-lorem-ipsum-passage-used-since-the-1500s"} ],
       [ :p, "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." ],
       [ :pre, "Ut enim ad minim veniam, quis nostrud exercitation ullamco
 laboris nisi ut aliquip ex ea commodo consequat.
@@ -86,9 +86,9 @@ esse cillum dolore eu fugiat nulla pariatur." ],
 
   test "should parse text with nested lists" do
     struct = [
-      [ :h1, "Heading 1" ],
+      [ :h1, "Heading 1", {:id=>"heading-1"} ],
       [ :p,  "The very first paragraph." ],
-      [ :h2, "Heading 2" ],
+      [ :h2, "Heading 2", {:id=>"heading-2"} ],
       [ :ol, [
         [ :li, [
           "item 1",

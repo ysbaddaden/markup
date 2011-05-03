@@ -48,8 +48,9 @@ class Markup
         case str
         when self.class.heading_re
           tag = "h#{$1.size}".to_sym
-          self.toc << [ tag, $2, $2.parameterize ]
-          [ tag, $2 ]
+          id  = $2.parameterize
+          self.toc << [ tag, $2, id ]
+          [ tag, $2, { :id => id } ]
         
         when self.class.pre_re
           [ :pre, str.gsub(self.class.pre_clean, '') ]

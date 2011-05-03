@@ -7,9 +7,9 @@ class HtmlTest < ActiveSupport::TestCase
   end
 
   test "blocks" do
-    html = "<h1>Heading 1</h1>" +
+    html = "<h1 id=\"heading-1\">Heading 1</h1>" +
       "<p>The very first paragraph.</p>" +
-      "<h2>Heading 2</h2>" +
+      "<h2 id=\"heading-2\">Heading 2</h2>" +
       "<ol>" +
         "<li>" +
           "item 1" +
@@ -35,9 +35,9 @@ class HtmlTest < ActiveSupport::TestCase
   end
 
   test "indentation" do
-    html = "<h1>Heading 1</h1>
+    html = "<h1 id=\"heading-1\">Heading 1</h1>
 <p>The very first paragraph.</p>
-<h2>Heading 2</h2>
+<h2 id=\"heading-2\">Heading 2</h2>
 <ol>
   <li>
     item 1
@@ -63,15 +63,15 @@ class HtmlTest < ActiveSupport::TestCase
   end
 
   test "headings level" do
-    assert_equal "<h3>Heading 1</h3><p>The very <b>first</b> paragraph.</p>",
+    assert_equal "<h3 id=\"heading-1\">Heading 1</h3><p>The very <b>first</b> paragraph.</p>",
       Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html(:headings => 3)
     
-    assert_equal "<h1>Heading 1</h1><p>The very <b>first</b> paragraph.</p>",
+    assert_equal "<h1 id=\"heading-1\">Heading 1</h1><p>The very <b>first</b> paragraph.</p>",
       Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html(:headings => 1)
   end
 
   test "inlines" do
-    assert_equal "<h1>Heading 1</h1><p>The very <b>first</b> paragraph.</p>",
+    assert_equal "<h1 id=\"heading-1\">Heading 1</h1><p>The very <b>first</b> paragraph.</p>",
       Markup.new("= Heading 1\n\nThe very **first** paragraph.").to_html
   end
 
