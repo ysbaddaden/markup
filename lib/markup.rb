@@ -3,8 +3,6 @@ require 'active_support/core_ext/class'
 require 'markup/html'
 
 # TODO: parse tables |= head 1 |=head2\n|row 1 cell 1|row 1 cell 2\n
-# TODO: headings should act as anchors (HTML formatter only?)
-# IMPROVE: generate table of content from headings.
 class Markup
   include HTML
 
@@ -26,7 +24,7 @@ class Markup
   self.nested_block = /\A(.*?)\n([-*#=>] .*)\Z/m
 
   cattr_accessor :inlines_re
-  self.inlines_re = /(?:(^|\s)(\*\*|\/\/|__|~~|`|\^\^|,,)(.+?)\2(\s|$)|(\[\[)(.+?)\]\]|(\{\{)(.+?)\}\})/
+  self.inlines_re = /(?:(^|[^\w])(\*\*|\/\/|__|~~|`|\^\^|,,)(.+?)\2([^\w]|$)|(\[\[)(.+?)\]\]|(\{\{)(.+?)\}\})/
 
   attr_accessor :input_string, :toc
 
