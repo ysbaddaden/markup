@@ -2,7 +2,7 @@
 require 'active_support/core_ext/class'
 require 'markup/html'
 
-# TODO: parse tables |= head 1 |=head2\n|row 1 cell 1|row 1 cell 2\n
+# IMPROVE: parse tables |= head 1 |=head2\n|row 1 cell 1|row 1 cell 2\n
 class Markup
   include HTML
 
@@ -23,8 +23,18 @@ class Markup
   self.list_clean   = /^[ ]{2}/
   self.nested_block = /\A(.*?)\n([-*#=>] .*)\Z/m
 
-  cattr_accessor :inlines_re
-  self.inlines_re = /(?:(^|[^\w])(\*\*|\/\/|__|~~|`|\^\^|,,)(.+?)\2([^\w]|$)|(\[\[)(.+?)\]\]|(\{\{)(.+?)\}\})/
+  cattr_accessor :inlines
+  self.inlines = [
+    [ :b,    '**' ],
+    [ :i,    '//' ],
+    [ :u,    '__' ],
+    [ :s,    '~~' ],
+    [ :code, '`'  ],
+    [ :sup,  '^^' ],
+    [ :sub,  ',,' ],
+    [ :a,    /(\[\[)(.+?)\]\]/ ],
+    [ :img,  /(\{\{)(.+?)\}\}/ ]
+  ]
 
   attr_accessor :input_string, :toc
 
@@ -165,5 +175,28 @@ class Markup
         gsub(/\s+(;|\?|\!|»)/, ' \1').             # french thin nbsp (U+202F)
         gsub(/«\s+/, '\1 ').                       # french quotation thin nbsp (U+202F)
         gsub(/(\s—\s+)(.+?)(\s+—\s)/, ' — \2 — ')  # french em dashes (with thin nbsp)
+    end
+
+    def self.inlines_re
+      unless @inlines_re
+        regulars = []
+        specials = []
+        
+        self.inlines.each do |tag, mark|
+          if mark.is_a?(Regexp)
+            specials << mark.to_s
+          else
+            regulars << mark
+          end
+        end
+        
+        re = regulars.collect { |m| Regexp.quote(m) }.join('|')
+        re = '(?:(^|[^\w])(' + re + ')(.+?)\2([^\w]|$))'
+        specials.each { |m| re += '|' + m }
+        
+        @inlines_re = Regexp.new(re)
+      end
+      
+      @inlines_re
     end
 end
