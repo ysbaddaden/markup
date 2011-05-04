@@ -3,6 +3,9 @@ PATH
   specs:
     alml (0.1.0)
       activesupport (~> 3.0.7)
+      activesupport (~> 3.0.7)
+      alml
+      i18n
 
 GEM
   remote: http://rubygems.org/

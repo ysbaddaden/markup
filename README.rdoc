@@ -3,12 +3,21 @@
 ALML is yet another lightweight markup language. The current implementation is
 pure ruby.
 
-== Syntax
+The overall syntax follows Creole 1.0, except when it comes to lists,
+blockquotes and nested blocks, where it's more inspired by Markdown and RDoc.
+
+== Configuration
+
+ALML is configurable throught regexp. You may for instance rewrite
+how links are parsed by manipulating the Markup.inlines Array and
+Markup#parse_link method. You may also parse new elements.
+
+== Syntax Example
 
   = Heading 1
   
   This is a single
-  paragraph.
+  paragraph with **some bold**.
   
   And this is another paragraph.
   

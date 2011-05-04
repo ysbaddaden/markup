@@ -32,8 +32,8 @@ class Markup
     [ :code, '`'  ],
     [ :sup,  '^^' ],
     [ :sub,  ',,' ],
-    [ :a,    /(\[\[)(.+?)\]\]/ ],
-    [ :img,  /(\{\{)(.+?)\}\}/ ]
+    [ :a,    '[[', /(\[\[)(.+?)\]\]/ ],
+    [ :img,  '{{', /(\{\{)(.+?)\}\}/ ]
   ]
 
   attr_accessor :input_string, :toc
@@ -106,6 +106,15 @@ class Markup
       end
     end
 
+    def self.inlines_hash
+      unless @inlines_hash
+        @inlines_hash = {}
+        inlines.each { |tag, mark, re| @inlines_hash[mark] = tag }
+      end
+      
+      @inlines_hash
+    end
+
     # Parses a block of text for inline elements (bold, italic, links, etc.)
     def parse_inlines(str)
       parts = str.split(self.class.inlines_re)
@@ -113,27 +122,19 @@ class Markup
       
       i = 0
       until parts[i].nil?
-        case parts[i]
-        when '**'
-          spans << [ :b,   parse_inlines(parts[i+=1]) ]
-        when '//'
-          spans << [ :i,   parse_inlines(parts[i+=1]) ]
-        when '__'
-          spans << [ :u,   parse_inlines(parts[i+=1]) ]
-        when '~~'
-          spans << [ :s,   parse_inlines(parts[i+=1]) ]
-        when '^^'
-          spans << [ :sup, parse_inlines(parts[i+=1]) ]
-        when ',,'
-          spans << [ :sub, parse_inlines(parts[i+=1]) ]
-        when '`'
-          spans << [ :code, parts[i+=1] ]
-        when '[['
-          url, contents = parse_link(parts[i+=1])
-          spans << [ :a, contents, { :href => url } ]
-        when '{{'
-          url, alt = parse_image(parts[i+=1])
-          spans << [ :img, nil, { :src => url, :alt => alt } ]
+        if tag = self.class.inlines_hash[parts[i]]
+          case tag
+          when :a
+            url, contents = parse_link(parts[i+=1])
+            spans << [ :a, contents, { :href => url } ]
+          when :img
+            url, alt = parse_image(parts[i+=1])
+            spans << [ :img, nil, { :src => url, :alt => alt } ]
+          when :code
+            spans << [ :code, parts[i+=1] ]
+          else
+            spans << [ tag, parse_inlines(parts[i += 1]) ]
+          end
         else
           unless parts[i].empty?
             part = parts[i].blank? ? " " : smart_punctuation(parts[i])
@@ -182,11 +183,11 @@ class Markup
         regulars = []
         specials = []
         
-        self.inlines.each do |tag, mark|
-          if mark.is_a?(Regexp)
-            specials << mark.to_s
-          else
+        self.inlines.each do |tag, mark, re|
+          if re.nil?
             regulars << mark
+          else
+            specials << re.to_s
           end
         end
         
